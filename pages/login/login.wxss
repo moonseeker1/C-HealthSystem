@@ -1,0 +1,227 @@
+/* pages/login/login.wxss */
+/* 最大的父元素 */
+.v1 {
+  display: block;
+  position: absolute;
+  width: 100%;
+  background-color: rgb(250, 248, 248);
+}
+
+/* 白色区域 */
+.v1 .v2 {
+  position: relative;
+  margin-top: 150rpx;
+  left: 100rpx;
+  width: 545rpx;
+  height: 600rpx;
+  background-color: rgb(250, 248, 248);
+  border-radius: 50rpx;
+}
+
+/* 白色区域内的登录文本 */
+.v1 .v2 .dltext {
+  margin-top: 50rpx;
+  position: absolute;
+  margin-left: 50rpx;
+  width: 150rpx;
+  height: 100rpx;
+  font-size: 60rpx;
+  font-family: Helvetica;
+  color: #000000;
+  line-height: 100rpx;
+  letter-spacing: 2rpx;
+}
+
+/* 手机图片+输入框+下划线的父容器view */
+.v1 .v2 .phoneCs {
+  margin-top: 200rpx;
+  margin-left: 25rpx;
+  position: absolute;
+  display: flex;
+  width: 480rpx;
+  height: 90rpx;
+  background-color: white;
+
+}
+
+/* 手机图标 */
+.v1 .v2 .phoneCs .ph {
+  margin-top: 5rpx;
+  margin-left: 30rpx;
+  width: 55rpx;
+  height: 55rpx;
+}
+
+/* 手机号输入框 */
+.v1 .v2 .phoneCs input {
+  width: 400rpx;
+  font-size: 30rpx;
+  margin-top: 25rpx;
+  margin-left: 30rpx;
+}
+
+/* 密码图标+输入框+小眼睛图标+下划线父容器view */
+.v1 .v2 .passwordCs {
+  margin-top: 350rpx;
+  margin-left: 25rpx;
+  position: absolute;
+  display: flex;
+  width: 480rpx;
+  height: 90rpx;
+  background-color: white;
+
+}
+
+/* 密码图标 */
+.v1 .v2 .passwordCs .ps {
+  margin-top: 5rpx;
+  margin-left: 30rpx;
+  width: 55rpx;
+  height: 55rpx;
+}
+
+/* 眼睛 图标*/
+.v1 .v2 .passwordCs .eye {
+  margin-top: 5rpx;
+  margin-left: 65rpx;
+  width: 55rpx;
+  height: 55rpx;
+}
+
+/* 密码输入框 */
+.v1 .v2 .passwordCs input {
+  width: 400rpx;
+  font-size: 30rpx;
+  margin-top: 25rpx;
+  margin-left: 30rpx;
+}
+
+/* 登录按钮和注册按钮的公共容器样式 */
+.v1 .v2 .button-container {
+  width: 480rpx;
+  position: absolute;
+  margin-top: 515rpx;
+  margin-left: 25rpx;
+  display: flex;
+  flex-direction: column; /* 垂直排列按钮 */
+  gap: 10rpx; /* 设置按钮之间的间距为 0 */
+}
+
+/* 登录按钮和注册按钮的公共样式 */
+.v1 .v2 .button-container button {
+  padding: 0rpx;
+  line-height: 60rpx; 
+  font-size: 30rpx;
+  width: 100%;
+  height: 70rpx; 
+  border-radius: 0rpx; /* 去掉按钮的圆角 */
+  margin: 5; /* 去掉按钮的外边距 */
+}
+
+/* 登录按钮样式 */
+.v1 .v2 .button-container .btn-dl {
+  border-top-left-radius: 5rpx;
+  border-top-right-radius: 5rpx;
+}
+
+/* 注册按钮样式 */
+.v1 .v2 .button-container .btn-zc {
+  border-bottom-left-radius: 5rpx;
+  border-bottom-right-radius: 5rpx;
+}
+
+/* 注册模态框样式 */
+.register-modal-container {
+  padding: 20rpx;
+}
+
+.register-modal-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.register-modal-label {
+  width: 150rpx;
+}
+
+.register-modal-input {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10rpx;
+  border-radius: 5rpx;
+  /* 遮罩层样式 */
+}
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* 模态框内容样式 */
+.modal-content {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  width: 80%;
+  max-width: 350px;
+}
+
+/* 模态框标题样式 */
+.modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* 注册模态框容器样式 */
+.register-modal-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 注册模态框行样式 */
+.register-modal-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* 注册模态框标签样式 */
+.register-modal-label {
+  width: 80px;
+  font-size: 14px;
+}
+
+/* 注册模态框输入框样式 */
+.register-modal-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* 模态框按钮容器样式 */
+.modal-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+/* 模态框按钮样式 */
+.modal-button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}

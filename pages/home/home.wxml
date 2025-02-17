@@ -1,0 +1,71 @@
+<!-- 新增新建健康档案按钮 -->
+<button bindtap="showNewHealthModal" class="showNewHealthModal" type="primary">新建健康档案</button>
+
+
+<!-- 健康档案格子 -->
+<button class="new-health-btn" bindtap="showHealthModal" type="primary">健康档案</button>
+
+<!-- 健康建议按钮 -->
+<button class="health-suggestion-btn" bindtap="showHealthSuggestionModal" type="primary">健康建议</button>
+<view class="container">
+  <button bindtap="logout" class="logout_btn" type="primary">退出登录</button>
+  <mp-dialog title="退出登录" show="{{isShow}}" bindbuttontap="confirmLogout" buttons="{{buttons}}">
+    <view>确认退出吗？</view>
+  </mp-dialog>
+  <!-- 健康档案模态框 -->
+  <mp-dialog title="健康档案信息" show="{{isUpdateHealthModalShow}}" bindbuttontap="confirmUpdateHealthData" buttons="{{buttons}}">
+    <view class="health-modal-container">
+      <view class="health-modal-row">
+        <view class="health-modal-label">年龄</view>
+        <input type="number" placeholder="请输入年龄" data-field="age" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.age}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">身高</view>
+        <input type="number" placeholder="请输入身高（cm）" data-field="height" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.height}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">体重</view>
+        <input type="number" placeholder="请输入体重（kg）" data-field="weight" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.weight}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">血压</view>
+        <input type="text" placeholder="请输入血压" data-field="bloodPressure" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.bloodPressure}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">血糖</view>
+        <input type="number" placeholder="请输入血糖" data-field="bloodSugar" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.bloodSugar}}" />
+      </view>
+    </view>
+  </mp-dialog>
+  <!-- 新建健康档案模态框 -->
+  <mp-dialog title="新建健康档案信息" show="{{isHealthModalShow}}" bindbuttontap="confirmNewHealthData" buttons="{{buttons}}">
+    <view class="health-modal-container">
+      <view class="health-modal-row">
+        <view class="health-modal-label">年龄</view>
+        <input type="number" placeholder="请输入年龄" data-field="age" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.age}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">身高</view>
+        <input type="number" placeholder="请输入身高（cm）" data-field="height" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.height}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">体重</view>
+        <input type="number" placeholder="请输入体重（kg）" data-field="weight" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.weight}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">血压</view>
+        <input type="text" placeholder="请输入血压" data-field="bloodPressure" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.bloodPressure}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">血糖</view>
+        <input type="number" placeholder="请输入血糖" data-field="bloodSugar" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.bloodSugar}}" />
+      </view>
+    </view>
+  </mp-dialog>
+  <!-- 健康建议模态框 -->
+  <mp-dialog title="健康分析" show="{{isHealthSuggestionModalShow}}" bindbuttontap="confirmHealthSuggestion" buttons="{{buttons}}">
+    <view class="health-suggestion-container">
+      <view>{{healthSuggestion}}</view>
+    </view>
+  </mp-dialog>
+</view>

@@ -1,0 +1,50 @@
+<view class="v1" style="height:{{clientHeight?clientHeight+'px':'auto'}}">
+  <!-- v2父容器  子view使用绝对布局 -->
+  <view class="v2">
+    <view class="dltext" style="width: 232rpx; height: 92rpx; display: block; box-sizing: border-box; left: 0rpx; top: -2rpx">登录</view>
+
+    <!-- 账号 -->
+    <view class="phoneCs">
+      <!-- <image src="/images/zhang.png" class="ph"></image> -->
+      <input placeholder="请输入账号" type="text" bindinput="handleUsernameInput" />
+    </view>
+    <!-- 密码 -->
+    <view class="passwordCs">
+      <!-- <image src="/images/mi.png" class="ps"></image> -->
+      <input placeholder="请输入密码" type="password" bindinput="handlePasswordInput" />
+    </view>
+
+    <!-- 登录和注册按钮容器 -->
+    <view class="button-container">
+      <!-- 登录按钮 -->
+      <view class="denglu">
+        <button class="btn-dl" type="primary" bindtap="goadmin">登录</button>
+      </view>
+      <!-- 注册按钮 -->
+      <view class="zhuce">
+        <button class="btn-zc" type="default" bindtap="showRegisterModal">注册</button>
+      </view>
+    </view>
+  </view>
+
+<!-- 自定义注册模态框 -->
+<view class="modal-mask" style="{{isRegisterModalShow ? 'display: flex' : 'display: none'}}" bindtap="cancelRegister">
+  <view class="modal-content" catchtap="preventClose">
+    <view class="modal-title">注册</view>
+    <view class="register-modal-container">
+      <view class="register-modal-row">
+        <view class="register-modal-label">用户名</view>
+        <input type="text" placeholder="请输入用户名" bindinput="handleRegisterUsernameInput" class="register-modal-input" value="{{registerUsername}}" />
+      </view>
+      <view class="register-modal-row">
+        <view class="register-modal-label">密码</view>
+        <input type="password" placeholder="请输入密码" bindinput="handleRegisterPasswordInput" class="register-modal-input" value="{{registerPassword}}"/>
+      </view>
+    </view>
+    <view class="modal-buttons">
+      <button bindtap="cancelRegister" class="modal-button">取消</button>
+      <button bindtap="confirmRegister" class="modal-button">确认</button>
+    </view>
+  </view>
+</view>
+</view>
