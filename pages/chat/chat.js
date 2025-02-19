@@ -75,7 +75,7 @@ function initData(that) {
  * 发送 HTTP 请求到后端接口
  */
 function sendHttpMessage(msg, that) {
-  let isHttpRequestComplete = false; // 标记 HTTP 请求是否完成
+
   let socketTask;
   const app = getApp();
   const jwtToken = app.getJwtToken();
@@ -98,137 +98,155 @@ function sendHttpMessage(msg, that) {
           console.error('HTTP 请求失败:', err);
       }
   });
-
   // 连接 WebSocket
-  socketTask = wx.connectSocket({
+   socketTask = wx.connectSocket({
     url: 'ws://localhost:9202/ws',
-    header: { 'content-type': 'application/json' ,
+    header: { 'content-type': 'application/json',
+    'Authorization': `Bearer ${jwtToken}` },
+  success: function (res) {
+    console.log('WebSocket连接创建成功');
   },
-    success: function (res) {
-        console.log('WebSocket连接创建成功');
-        // 这里添加订阅逻辑
-        // 假设可以通过发送特定格式的消息进行订阅
-        socketTask.send({
-            data: JSON.stringify({
-                command: 'SUBSCRIBE',
-                destination: '/topic/chat'
-            })
-        });
-    },
     fail: function (err) {
         console.log('WebSocket连接创建失败', err);
     }
 });
+// 存储完整对话内容
+let fullConversation = '';
+// 当前正在处理的服务器消息在 msgList 中的索引
+let currentMsgIndex = -1;
+// 缓冲区，用于临时存储接收到的消息片段
+let buffer = '';
+// 定时器 ID
+let intervalId = null;
+// 逐字显示的时间间隔（毫秒）
+const displayInterval = 30; 
 
-  // 监听 WebSocket 消息
-  socketTask.onMessage((res) => {
+// 监听 WebSocket 消息
+socketTask.onMessage((res) => {
+    const receivedWord = res.data;
 
-      const data = JSON.parse(res.data);
-      let fullResponse = '';
-      if (Array.isArray(data)) {
-          data.forEach(chunk => {
-              if (chunk && chunk.choices && chunk.choices[0].message) {
-                  fullResponse += chunk.choices[0].message.content;
-              }
-          });
-      } else if (data && data.choices && data.choices[0].message) {
-          fullResponse = data.choices[0].message.content;
-      }
+    // 过滤结束符
+    if (receivedWord === '$$$') {
+        // 如果缓冲区还有剩余字符，先处理这些字符
+        if (buffer) {
+            handleBufferedMessage();
+        }
+        handleCompleteMessage();
+        return;
+    }
 
-      // 更新 msgList 以显示拼接后的完整回复
-      msgList.push({
-          speaker: 'server',
-          contentType: 'text',
-          content: ''
-      });
-      curAnsCount++;
-      if (curAnsCount % lineCount === 0) {
-          wx.createSelectorQuery().select('#chatPage').boundingClientRect(function (rect) {
-              wx.pageScrollTo({
-                  scrollTop: rect.bottom
-              });
-          }).exec();
-      }
-      // 在 onMessage 中判断结束条件
-      if (data.isEnd) { // 假设服务端返回结束标志
-        socketTask.close();
-      }
-      // 逐字显示
-      showTextCharacterByCharacter(fullResponse, that);
-      
-  });
+    // 将接收到的消息添加到缓冲区
+    buffer += receivedWord;
+    // 拼接完整对话内容
+    fullConversation += receivedWord;
 
-  // 监听 WebSocket 关闭事件
-  socketTask.onClose(() => {
-      console.log('WebSocket 连接关闭');
-  });
+    // 如果缓冲区字符数量达到 10 个，开始逐字显示
+    if (buffer.length >= 10) {
+        const displayText = buffer.slice(0, 10);
+        buffer = buffer.slice(10);
 
-  // 监听 WebSocket 错误事件
-  socketTask.onError((err) => {
-      console.error('WebSocket 发生错误:', err);
-  });
+        // 如果当前没有正在处理的服务器消息，创建新消息
+        if (currentMsgIndex === -1 || msgList[currentMsgIndex].speaker!== 'server') {
+            msgList.push({
+                speaker: 'server',
+                contentType: 'text',
+                content: ''
+            });
+            currentMsgIndex = msgList.length - 1;
+        }
+
+        // 停止之前的定时器
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+
+        // 开始逐字显示新消息
+        startCharacterByCharacterDisplay(displayText);
+    }
+
+    curAnsCount++;
+    if (curAnsCount % lineCount === 0) {
+        wx.createSelectorQuery().select('#chatPage').boundingClientRect(rect => {
+            wx.pageScrollTo({
+                scrollTop: rect.bottom
+            });
+        }).exec();
+    }
+});
+
+// 开始逐字显示的函数
+function startCharacterByCharacterDisplay(text) {
+    let index = 0;
+    intervalId = setInterval(() => {
+        if (index < text.length) {
+            const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
+            if (msgList[currentMsgIndex].content!== newContent) {
+                msgList[currentMsgIndex].content = newContent;
+                that.setData({
+                    msgList
+                });
+            }
+            index++;
+        } else {
+            clearInterval(intervalId);
+            // 如果缓冲区还有字符，继续处理
+            if (buffer.length >= 10) {
+                const nextDisplayText = buffer.slice(0, 10);
+                buffer = buffer.slice(10);
+                startCharacterByCharacterDisplay(nextDisplayText);
+            }
+        }
+    }, displayInterval);
 }
 
-/* function sendHttpMessage(msg, that) {
-  wx.request({
-      url: 'http://127.0.0.1:8080/bigModule/chat', // 后端的 chat 接口 URL
-      method: 'GET', // 使用 GET 请求
-      data: {
-          text: msg // 将用户输入的消息作为查询参数发送给后端
-      },
-      success: (res) => {
-          if (res.statusCode === 200 && res.data) {
-              // 后端返回的是一个字符串，直接使用
-              const fullResponse = res.data;
-              
-              // 更新 msgList 以显示完整回复
-              msgList.push({
-                  speaker: 'server',
-                  contentType: 'text',
-                  content: fullResponse // 直接将完整的回复内容显示
-              });
+// 处理缓冲区剩余消息的函数
+function handleBufferedMessage() {
+    if (buffer) {
+        // 如果当前没有正在处理的服务器消息，创建新消息
+        if (currentMsgIndex === -1 || msgList[currentMsgIndex].speaker!== 'server') {
+            msgList.push({
+                speaker: 'server',
+                contentType: 'text',
+                content: ''
+            });
+            currentMsgIndex = msgList.length - 1;
+        }
 
-              curAnsCount++;
-              if (curAnsCount % lineCount === 0) {
-                  wx.createSelectorQuery().select('#chatPage').boundingClientRect(function (rect) {
-                      wx.pageScrollTo({
-                          scrollTop: rect.bottom
-                      });
-                  }).exec();
-              }
-          } else {
-              console.error('聊天请求失败:', res);
-          }
-      },
-      fail: (err) => {
-          console.error('请求失败:', err);
-      }
-  });
-} */
+        // 停止之前的定时器
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
 
-
-/**
- * 逐字显示内容
- * @param {string} text - 要显示的内容
- * @param {object} that - 当前页面的上下文
- */
-function showTextCharacterByCharacter(text, that) {
-  let currentContent = ''; // 用于存储当前显示的内容
-  let index = 0; // 当前字符的索引
-
-  // 每隔 100 毫秒显示一个字符
-  let intervalId = setInterval(() => {
-    if (index < text.length) {
-      currentContent += text.charAt(index);
-      msgList[msgList.length - 1].content = currentContent; // 更新当前消息的内容
-      that.setData({
-        msgList
-      });
-      index++;
-    } else {
-      clearInterval(intervalId); // 如果已经显示完所有字符，清除定时器
+        // 开始逐字显示缓冲区剩余的消息
+        startCharacterByCharacterDisplay(buffer);
+        buffer = '';
     }
-  }, 20); // 100ms 后显示下一个字符，可以调整时间控制显示速度
+}
+
+// 处理完整消息的函数
+function handleCompleteMessage() {
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
+    msgList[currentMsgIndex].content = fullConversation;
+    that.setData({
+        msgList
+    });
+    // 重置相关变量
+    currentMsgIndex = -1;
+    buffer = '';
+    fullConversation = '';
+}
+
+// 监听 WebSocket 关闭事件
+socketTask.onClose(() => {
+    console.log('WebSocket 连接关闭');
+});
+
+// 监听 WebSocket 错误事件
+socketTask.onError((err) => {
+    console.error('WebSocket 发生错误:', err);
+});
 }
 
 Page({
