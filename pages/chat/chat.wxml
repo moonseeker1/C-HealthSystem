@@ -25,7 +25,7 @@
       <view class='rightMsg'>{{item.content}}</view>
       <view style='width: 4vw; height: 11vw; margin-right: 0.5vw; display: flex; align-items: center; z-index: 9;'>
         <!-- 建议改为 https 协议 -->
-        <image style='width: 4vw;' src='https://example.com/images/向右.png' mode='widthFix'></image>
+        <image style='width: 4vw;' src='pages\chat\image\向右.png' mode='widthFix'></image>
       </view>
       <view style='width: 11vw; height: 11vw;'>
         <image style='width: 11vw; height: 11vw; border-radius: 10rpx;' src='{{cusHeadIcon}}'></image>
