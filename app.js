@@ -4,13 +4,40 @@ App({
     const logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
+
+      // 如果socketTask不存在或者已关闭，创建新的WebSocket连接
+
   },
   globalData: {
     userInfo: null,
     userId: null,
     userName: null,
     jwtToken: null,
-    status: null
+    status: null,
+    socketTask: null
+  },
+  linkWebSocket(){
+    
+    if (!this.globalData.socketTask || this.globalData.socketTask.readyState === wx.connectSocket.CLOSED) {
+      const jwtToken = this.globalData.jwtToken || wx.getStorageSync('jwtToken');
+      if (!jwtToken) {
+          console.error('未获取到 JWT Token，无法请求用户信息');
+          return;
+      }
+      // 连接 WebSocket
+      this.globalData.socketTask = wx.connectSocket({
+         url: 'ws://localhost:9202/ws',
+         header: {
+           'content-type': 'application/json',
+           'Authorization': `Bearer ${jwtToken}`
+         },
+         success: function (res) {
+           console.log('WebSocket连接创建成功');
+         },
+         fail: function (err) {
+           console.log('WebSocket连接创建失败', err);
+         }
+     });}
   },
   getUserInfo() {
     const jwtToken = this.globalData.jwtToken || wx.getStorageSync('jwtToken');
@@ -48,6 +75,7 @@ App({
         }
     });
 },
+
   // 获取 userId 的方法
   getUserId() {
     if (!this.globalData.userId) {
@@ -72,7 +100,6 @@ App({
     if (!this.globalData.status) {
       this.globalData.status = wx.getStorageSync('status');
     }
-    console.log(1);
     return this.globalData.status;
   },
   setStatus(status) {
@@ -80,4 +107,9 @@ App({
     // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
     wx.setStorageSync('status', status);
   },
+  getSocketTask(){
+
+    return this.globalData.socketTask;
+  
+  }
 });

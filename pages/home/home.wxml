@@ -20,6 +20,14 @@
         <input type="number" placeholder="请输入年龄" data-field="age" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.age}}" />
       </view>
       <view class="health-modal-row">
+        <view class="health-modal-label">性别</view>
+        <radio-group bindchange="handleSexChange">
+          <label wx:for="{{sexOptions}}" wx:key="*this">
+            <radio value="{{index}}" checked="{{selectedSex === index.toString()}}"/>{{item}}
+          </label>
+        </radio-group>
+      </view>
+      <view class="health-modal-row">
         <view class="health-modal-label">身高</view>
         <input type="number" placeholder="请输入身高（cm）" data-field="height" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.height}}" />
       </view>
@@ -42,23 +50,31 @@
     <view class="health-modal-container">
       <view class="health-modal-row">
         <view class="health-modal-label">年龄</view>
-        <input type="number" placeholder="请输入年龄" data-field="age" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.age}}" />
+        <input type="number" placeholder="请输入年龄" data-field="age" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.age}}" />
+      </view>
+      <view class="health-modal-row">
+        <view class="health-modal-label">性别</view>
+        <radio-group bindchange="handleSexChange">
+          <label wx:for="{{sexOptions}}" wx:key="*this">
+            <radio value="{{index}}" checked="{{selectedSex === index.toString()}}"/>{{item}}
+          </label>
+        </radio-group>
       </view>
       <view class="health-modal-row">
         <view class="health-modal-label">身高</view>
-        <input type="number" placeholder="请输入身高（cm）" data-field="height" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.height}}" />
+        <input type="number" placeholder="请输入身高（cm）" data-field="height" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.height}}" />
       </view>
       <view class="health-modal-row">
         <view class="health-modal-label">体重</view>
-        <input type="number" placeholder="请输入体重（kg）" data-field="weight" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.weight}}" />
+        <input type="number" placeholder="请输入体重（kg）" data-field="weight" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.weight}}" />
       </view>
       <view class="health-modal-row">
         <view class="health-modal-label">血压</view>
-        <input type="text" placeholder="请输入血压" data-field="bloodPressure" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.bloodPressure}}" />
+        <input type="text" placeholder="请输入血压" data-field="bloodPressure" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.bloodPressure}}" />
       </view>
       <view class="health-modal-row">
         <view class="health-modal-label">血糖</view>
-        <input type="number" placeholder="请输入血糖" data-field="bloodSugar" bindinput="handleNewHealthInputChange" class="health-modal-input" value="{{newHealthData.bloodSugar}}" />
+        <input type="number" placeholder="请输入血糖" data-field="bloodSugar" bindinput="handleHealthInputChange" class="health-modal-input" value="{{healthData.bloodSugar}}" />
       </view>
     </view>
   </mp-dialog>

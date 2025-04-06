@@ -1,6 +1,7 @@
 // 获取应用实例
 const app = getApp()
-
+let idleTimeoutId = null; // 定义空闲超时的定时器ID
+const IDLE_TIMEOUT = 5 * 60 * 1000; // 空闲超时时间，这里设置为5分钟
 Page({
     data: {
         buttons: [{ text: '取消' }, { text: '确认' }],
@@ -10,6 +11,8 @@ Page({
         isUpdateHealthModalShow: false, 
         healthData: {
             age: '',
+            sexIndex: '0', // 0 表示男，1 表示女，默认选择男
+            sex: 0, // 存储性别的数值
             height: '',
             weight: '',
             bloodPressure: '',
@@ -18,7 +21,8 @@ Page({
         isModalOpen: false, 
         intervalId: null ,
         isHealthSuggestionModalShow: false,
-        healthSuggestion: ''
+        healthSuggestion: '',
+        sexOptions: ['男', '女'] // 性别选项
     },
     onShow: function () {
         if (wx.getStorageSync('expireTime') == null || wx.getStorageSync('expireTime') < Date.now()) {
@@ -108,6 +112,7 @@ Page({
             isShow: false
         })
     },
+    
     // 健康档案格子点击事件处理函数
     showHealthModal() {
         const app = getApp();
@@ -134,10 +139,14 @@ Page({
                     if (res.statusCode === 200) {
                         const { code, message, data } = res.data;
                         if (code === 200) { // 假设 200 表示请求成功
-                            const { age, height, weight, bloodPressure, bloodSugar } = data;
+                            const { age, sex, height, weight, bloodPressure, bloodSugar } = data;
+                            const sexIndex = sex === 0? 0 : 1; // 根据性别数值设置索引
+                            console.log(sexIndex);
                             this.setData({
                                 healthData: {
                                     age: age || '',
+                                    sexIndex: sexIndex,
+                                    sex: sex || '',
                                     height: height || '',
                                     weight: weight || '',
                                     bloodPressure: bloodPressure || '',
@@ -185,7 +194,7 @@ Page({
         const app = getApp();
         const status = app.getStatus();
         console.log(status);
-        if (status === "1") {
+        if (status === 1) {
             wx.showToast({
                 icon: 'none',
                 title: '已建立档案，无法重复新建',
@@ -197,6 +206,8 @@ Page({
         this.setData({
             healthData: {
                 age: '',
+                sexIndex: '0',
+                sex: 0,
                 height: '',
                 weight: '',
                 bloodPressure: '',
@@ -213,6 +224,16 @@ Page({
             [`healthData.${field}`]: value
         });
     },
+    // 处理性别选择变化的方法
+    handleSexChange: function(e) {
+      const index = e.detail.value;
+      console.log(index === '0'? '0' : '1');
+      this.setData({
+          "healthData.sexIndex": index,
+          "healthData.sex": index === '0'? '0' : '1' // 根据选择更新对应的数值
+      }, );
+      console.log(this.data.healthData.sex);
+  },
     // 处理健康档案模态框确认按钮点击事件
     confirmNewHealthData({ detail }) {
         const app = getApp();
@@ -222,8 +243,8 @@ Page({
         // 检查 detail.index 是否为 1，决定是否提交数据
         if (detail.index === 1) {
             // 解构健康数据
-            const { age, height, weight, bloodPressure, bloodSugar } = this.data.healthData;
-            
+            const { age, sex, height, weight, bloodPressure, bloodSugar } = this.data.healthData;
+            console.log(this.data.healthData.sex);
             // 验证 JWT Token
             if (!jwtToken) {
                 console.error('未获取到 JWT Token，无法请求新建健康档案');
@@ -238,6 +259,7 @@ Page({
             // 构建要发送的数据对象
             const healthDataToSend = {
                 age,
+                sex,
                 height,
                 weight,
                 bloodPressure,
@@ -263,12 +285,14 @@ Page({
                                 duration: 2500
                             });
                             // 更新应用状态，表示已建立档案
-                            app.setStatus('1'); 
+                            app.setStatus(1); 
                             // 关闭模态框并清空数据
                             this.setData({
                                 isHealthModalShow: false,
                                 healthData: {
                                     age: '',
+                                    sexIndex: 0,
+                                    sex: 0,
                                     height: '',
                                     weight: '',
                                     bloodPressure: '',
@@ -306,6 +330,8 @@ Page({
                 isHealthModalShow: false,
                 healthData: {
                     age: '',
+                    sexIndex: 0,
+                    sex: 0,
                     height: '',
                     weight: '',
                     bloodPressure: '',
@@ -318,100 +344,165 @@ Page({
       const app = getApp();
       const userId = app.getUserId();
       const jwtToken = app.getJwtToken();
-
+      const that = this;
+    
       if (!jwtToken) {
-          console.error('未获取到 JWT Token，无法请求健康分析');
-          wx.showToast({
-              icon: 'none',
-              title: '未获取到 JWT Token，无法请求健康分析'
-          });
-          return;
+        console.error('未获取到 JWT Token，无法请求健康分析');
+        wx.showToast({
+          icon: 'none',
+          title: '未获取到 JWT Token，无法请求健康分析'
+        });
+        return;
       }
-
+    
       if (userId) {
-          // 初始化建议内容为空
-          this.setData({
-              healthSuggestion: '',
-              isHealthSuggestionModalShow: true,
-              isModalOpen: true
-          });
-
-          // 显示加载提示
-          wx.showLoading({
-              title: '健康分析中...',
-              mask: true
-          });
-
-          wx.request({
-              url: `http://127.0.0.1:8080/bigModule/analysis?userId=${userId}`,
-              method: 'GET',
-              header: {
-                  'Authorization': `Bearer ${jwtToken}`
-              },
-              success: (res) => {
-                  if (res.statusCode === 200 && res.data) {
-                      let fullContent = '';
-                      res.data.forEach((chunk, index) => {
-                          if (chunk && chunk.choices && chunk.choices[0].message) {
-                              const newContent = chunk.choices[0].message.content;
-                              fullContent += newContent;
-                          }
-                      });
-
-                      // 开始逐字显示
-                      let currentIndex = 0;
-                      const intervalId = setInterval(() => {
-                          if (!this.data.isModalOpen) {
-                              // 如果模态框已关闭，停止定时器
-                              clearInterval(intervalId);
-                              return;
-                          }
-                          if (currentIndex < fullContent.length) {
-                              if (currentIndex === 0) {
-                                  // 当开始显示第一个字符时，隐藏加载提示
-                                  wx.hideLoading();
-                              }
-                              const currentSuggestion = this.data.healthSuggestion;
-                              const updatedSuggestion = currentSuggestion + fullContent[currentIndex];
-                              this.setData({
-                                  healthSuggestion: updatedSuggestion
-                              });
-                              currentIndex++;
-                          } else {
-                              clearInterval(intervalId);
-                          }
-                      }, 20); // 每 50 毫秒显示一个字符，可以根据需要调整
-                      this.setData({
-                          intervalId: intervalId
-                      });
-                  } else {
-                      console.error('聊天请求失败:', res);
-                  }
-              },
-              fail: (err) => {
-                  console.error('请求失败:', err);
-                  wx.showToast({
-                      icon: 'none',
-                      title: '请健康分析失败，请稍后重试'
-                  });
-                  // 请求失败时隐藏加载提示
-                  wx.hideLoading();
-              },
-              complete: () => {
-                  // 如果请求结束时还未开始显示内容，也隐藏加载提示
-                  if (this.data.healthSuggestion === '') {
-                      wx.hideLoading();
-                  }
-              }
-          });
+        // 初始化建议内容为空
+        that.setData({
+          healthSuggestion: '',
+          isHealthSuggestionModalShow: true,
+          isModalOpen: true
+        });
+    
+        wx.request({
+          url: `http://127.0.0.1:8080/bigModule/analysis?userId=${userId}`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${jwtToken}`
+          },
+          success: (res) => {
+            if (res.statusCode === 200 && res.data) {
+              console.log('分析请求成功');
+            } else {
+              console.error('分析请求失败:', res);
+            }
+          },
+          fail: (err) => {
+            console.error('HTTP 请求失败:', err);
+          },
+        });
       } else {
-          console.error('未获取到 userId');
-          wx.showToast({
-              icon: 'none',
-              title: '未获取到 userId'
-          });
+        console.error('未获取到 userId');
+        wx.showToast({
+          icon: 'none',
+          title: '未获取到 userId'
+        });
+        return;
       }
-  },
+    
+      // 存储完整对话内容
+      let fullConversation = '';
+      // 当前正在处理的服务器消息在 msgList 中的索引
+      let currentMsgIndex = -1;
+      // 缓冲区，用于临时存储接收到的消息片段
+      let buffer = '';
+      // 定时器 ID
+      let intervalId = null;
+      // 逐字显示的时间间隔（毫秒）
+      const displayInterval = 20;
+      let socketTask = app.getSocketTask();
+      if (socketTask === null) {
+        app.linkWebSocket();
+        socketTask = app.getSocketTask();
+      }
+    
+      // 监听 WebSocket 消息
+      socketTask.onMessage((res) => {
+        const receivedWord = res.data;
+        // 过滤结束符
+        if (receivedWord === '$$$') {
+          // 如果缓冲区还有剩余字符，先处理这些字符
+          if (buffer) {
+            handleBufferedMessage();
+          }
+          handleCompleteMessage();
+          return;
+        }
+    
+        // 将接收到的消息添加到缓冲区
+        buffer += receivedWord;
+        // 拼接完整对话内容
+        fullConversation += receivedWord;
+    
+        // 如果缓冲区字符数量达到 10 个，开始逐字显示
+        if (buffer.length >= 10) {
+          const displayText = buffer.slice(0, 10);
+          buffer = buffer.slice(10);
+    
+          // 停止之前的定时器
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+    
+          // 开始逐字显示新消息
+          startCharacterByCharacterDisplay(displayText);
+        }
+      });
+    
+      // 开始逐字显示的函数
+      function startCharacterByCharacterDisplay(text) {
+        let index = 0;
+        intervalId = setInterval(() => {
+          if (index < text.length) {
+            const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
+            that.setData({
+              healthSuggestion: newContent
+            });
+            index++;
+          } else {
+            clearInterval(intervalId);
+            // 如果缓冲区还有字符，继续处理
+            if (buffer.length >= 10) {
+              const nextDisplayText = buffer.slice(0, 10);
+              buffer = buffer.slice(10);
+              startCharacterByCharacterDisplay(nextDisplayText);
+            }
+          }
+        }, displayInterval);
+      }
+    
+      // 处理缓冲区剩余消息的函数
+      function handleBufferedMessage() {
+        if (buffer) {
+          // 停止之前的定时器
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+    
+          // 开始逐字显示缓冲区剩余的消息
+          startCharacterByCharacterDisplay(buffer);
+          buffer = '';
+        }
+      }
+    
+      // 处理完整消息的函数
+      function handleCompleteMessage() {
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        that.setData({
+          healthSuggestion: fullConversation
+        });
+        // 重置相关变量
+        currentMsgIndex = -1;
+        buffer = '';
+        fullConversation = '';
+        // 隐藏加载提示
+        wx.hideLoading();
+      }
+    
+      // 监听 WebSocket 关闭事件
+      socketTask.onClose(() => {
+        console.log('WebSocket 连接关闭');
+      });
+    
+      // 监听 WebSocket 错误事件
+      socketTask.onError((err) => {
+        console.error('WebSocket 发生错误:', err);
+        // 隐藏加载提示
+        wx.hideLoading();
+      });
+    },
+
     // 处理健康建议模态框确认按钮点击事件
     confirmHealthSuggestion({ detail }) {
         if (detail.index === 1) {
@@ -429,8 +520,7 @@ Page({
 
         // 检查 detail.index 是否为 1，决定是否提交数据
         if (detail.index === 1) {
-            const { age, height, weight, bloodPressure, bloodSugar } = this.data.healthData;
-
+            const { age, sex, height, weight, bloodPressure, bloodSugar } = this.data.healthData;
             if (!jwtToken) {
                 console.error('未获取到 JWT Token，无法请求更新健康档案');
                 wx.showToast({
@@ -443,6 +533,7 @@ Page({
 
             const healthDataToSend = {
                 userId: userId,
+                sex,
                 age,
                 height,
                 weight,
@@ -503,4 +594,4 @@ Page({
             });
         }
     }
-})
+})    

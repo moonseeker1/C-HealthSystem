@@ -10,6 +10,7 @@ let curAnsCount = 0;
 let socketTask = null; // 定义全局的socketTask变量
 let idleTimeoutId = null; // 定义空闲超时的定时器ID
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 空闲超时时间，这里设置为5分钟
+let isMessageListenerBound = false; // 用于标记是否已经绑定了 onMessage 监听器
 
 function initData(that) {
   const app = getApp();
@@ -88,7 +89,7 @@ function sendHttpMessage(msg, that) {
     header: {
       'Authorization': `Bearer ${jwtToken}`,
       'Content-Type': 'application/json'
-  },
+    },
     data: {
       text: msg
     },
@@ -104,36 +105,25 @@ function sendHttpMessage(msg, that) {
     }
   });
 
-  // 如果socketTask不存在或者已关闭，创建新的WebSocket连接
-  if (!socketTask || socketTask.readyState === wx.connectSocket.CLOSED) {
+  // 存储完整对话内容
+  let fullConversation = '';
+  // 当前正在处理的服务器消息在 msgList 中的索引
+  let currentMsgIndex = -1;
+  // 缓冲区，用于临时存储接收到的消息片段
+  let buffer = '';
+  // 定时器 ID
+  let intervalId = null;
+  // 逐字显示的时间间隔（毫秒）
+  const displayInterval = 20;
+  socketTask = app.getSocketTask();
+  if (socketTask === null) {
     console.log(1);
-    // 连接 WebSocket
-    socketTask = wx.connectSocket({
-      url: 'ws://localhost:9202/ws',
-      header: {
-        'content-type': 'application/json',
-        'Authorization': `Bearer ${jwtToken}`
-      },
-      success: function (res) {
-        console.log('WebSocket连接创建成功');
-      },
-      fail: function (err) {
-        console.log('WebSocket连接创建失败', err);
-      }
-    });
+    app.linkWebSocket();
+    socketTask = app.getSocketTask();
+  }
 
-    // 存储完整对话内容
-    let fullConversation = '';
-    // 当前正在处理的服务器消息在 msgList 中的索引
-    let currentMsgIndex = -1;
-    // 缓冲区，用于临时存储接收到的消息片段
-    let buffer = '';
-    // 定时器 ID
-    let intervalId = null;
-    // 逐字显示的时间间隔（毫秒）
-    const displayInterval = 20;
-
-    // 监听 WebSocket 消息
+  // 只绑定一次 onMessage 监听器
+  if (!isMessageListenerBound) {
     socketTask.onMessage((res) => {
       const receivedWord = res.data;
       // 过滤结束符
@@ -184,80 +174,87 @@ function sendHttpMessage(msg, that) {
         }).exec();
       }
     });
+    isMessageListenerBound = true;
+  }
 
-    // 开始逐字显示的函数
-    function startCharacterByCharacterDisplay(text) {
-      let index = 0;
-      intervalId = setInterval(() => {
-        if (index < text.length) {
-          const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
-          if (msgList[currentMsgIndex].content!== newContent) {
-            msgList[currentMsgIndex].content = newContent;
-            that.setData({
-              msgList
-            });
-          }
-          index++;
-        } else {
-          clearInterval(intervalId);
-          // 如果缓冲区还有字符，继续处理
-          if (buffer.length >= 10) {
-            const nextDisplayText = buffer.slice(0, 10);
-            buffer = buffer.slice(10);
-            startCharacterByCharacterDisplay(nextDisplayText);
-          }
-        }
-      }, displayInterval);
-    }
-
-    // 处理缓冲区剩余消息的函数
-    function handleBufferedMessage() {
-      if (buffer) {
-        // 如果当前没有正在处理的服务器消息，创建新消息
-        if (currentMsgIndex === -1 || msgList[currentMsgIndex].speaker!== 'server') {
-          msgList.push({
-            speaker: 'server',
-            contentType: 'text',
-            content: ''
+  // 开始逐字显示的函数
+  function startCharacterByCharacterDisplay(text) {
+    let index = 0;
+    intervalId = setInterval(() => {
+      if (index < text.length) {
+        const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
+        if (msgList[currentMsgIndex].content!== newContent) {
+          msgList[currentMsgIndex].content = newContent;
+          that.setData({
+            msgList
           });
-          currentMsgIndex = msgList.length - 1;
         }
-
-        // 停止之前的定时器
-        if (intervalId) {
-          clearInterval(intervalId);
+        index++;
+      } else {
+        clearInterval(intervalId);
+        // 如果缓冲区还有字符，继续处理
+        if (buffer.length >= 10) {
+          const nextDisplayText = buffer.slice(0, 10);
+          buffer = buffer.slice(10);
+          startCharacterByCharacterDisplay(nextDisplayText);
         }
-
-        // 开始逐字显示缓冲区剩余的消息
-        startCharacterByCharacterDisplay(buffer);
-        buffer = '';
       }
-    }
+    }, displayInterval);
+  }
 
-    // 处理完整消息的函数
-    function handleCompleteMessage() {
+  // 处理缓冲区剩余消息的函数
+  function handleBufferedMessage() {
+    if (buffer) {
+      // 如果当前没有正在处理的服务器消息，创建新消息
+      if (currentMsgIndex === -1 || msgList[currentMsgIndex].speaker!== 'server') {
+        msgList.push({
+          speaker: 'server',
+          contentType: 'text',
+          content: ''
+        });
+        currentMsgIndex = msgList.length - 1;
+      }
+
+      // 停止之前的定时器
       if (intervalId) {
         clearInterval(intervalId);
       }
-      msgList[currentMsgIndex].content = fullConversation;
-      that.setData({
-        msgList
-      });
-      // 重置相关变量
-      currentMsgIndex = -1;
-      buffer = '';
-      fullConversation = '';
-    }
 
-    // 监听 WebSocket 关闭事件
+      // 开始逐字显示缓冲区剩余的消息
+      startCharacterByCharacterDisplay(buffer);
+      buffer = '';
+    }
+  }
+
+  // 处理完整消息的函数
+  function handleCompleteMessage() {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+    msgList[currentMsgIndex].content = fullConversation;
+    that.setData({
+      msgList
+    });
+    // 重置相关变量
+    currentMsgIndex = -1;
+    buffer = '';
+    fullConversation = '';
+  }
+
+  // 监听 WebSocket 关闭事件
+  if (!socketTask.__onCloseBound) {
     socketTask.onClose(() => {
       console.log('WebSocket 连接关闭');
     });
+    socketTask.__onCloseBound = true;
+  }
 
-    // 监听 WebSocket 错误事件
+  // 监听 WebSocket 错误事件
+  if (!socketTask.__onErrorBound) {
     socketTask.onError((err) => {
       console.error('WebSocket 发生错误:', err);
     });
+    socketTask.__onErrorBound = true;
   }
 
   // 重置空闲超时定时器
@@ -265,7 +262,7 @@ function sendHttpMessage(msg, that) {
     clearTimeout(idleTimeoutId);
   }
   idleTimeoutId = setTimeout(() => {
-    if (socketTask && socketTask.readyState === wx.connectSocket.OPEN) {
+    if (socketTask && socketTask.readyState === wx.CONNECTING || socketTask.readyState === wx.OPEN) {
       socketTask.close();
       console.log('WebSocket 连接因空闲超时关闭');
     }
