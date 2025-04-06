@@ -23,7 +23,7 @@
             <view class="health-modal-label">性别</view>
             <radio-group bindchange="handleSexChange">
                 <label wx:for="{{sexOptions}}" wx:key="*this">
-                    <radio value="{{index}}" checked="{{healthData.sexIndex.toString() === index.toString()}}"/>{{item}}
+                    <radio value="{{index}}" checked="{{healthData.sexIndex === index}}"/>{{item}}
                 </label>
             </radio-group>
         </view>

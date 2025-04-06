@@ -231,9 +231,9 @@ Page({
       this.setData({
           "healthData.sexIndex": index,
           "healthData.sex": index === '0'? '0' : '1', // 根据选择更新对应的数值
-          selectedSex: index // 新增：更新 selectedSex 的值
+
       });
-      console.log(this.data.healthData.sex);
+      console.log(this.data.healthData.sexIndex);
   },
     // 处理健康档案模态框确认按钮点击事件
     confirmNewHealthData({ detail }) {
