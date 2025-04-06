@@ -22,7 +22,8 @@ Page({
         intervalId: null ,
         isHealthSuggestionModalShow: false,
         healthSuggestion: '',
-        sexOptions: ['男', '女'] // 性别选项
+        sexOptions: ['男', '女'], // 性别选项
+        selectedSex: '0'
     },
     onShow: function () {
         if (wx.getStorageSync('expireTime') == null || wx.getStorageSync('expireTime') < Date.now()) {
@@ -141,7 +142,6 @@ Page({
                         if (code === 200) { // 假设 200 表示请求成功
                             const { age, sex, height, weight, bloodPressure, bloodSugar } = data;
                             const sexIndex = sex === 0? 0 : 1; // 根据性别数值设置索引
-                            console.log(sexIndex);
                             this.setData({
                                 healthData: {
                                     age: age || '',
@@ -230,8 +230,9 @@ Page({
       console.log(index === '0'? '0' : '1');
       this.setData({
           "healthData.sexIndex": index,
-          "healthData.sex": index === '0'? '0' : '1' // 根据选择更新对应的数值
-      }, );
+          "healthData.sex": index === '0'? '0' : '1', // 根据选择更新对应的数值
+          selectedSex: index // 新增：更新 selectedSex 的值
+      });
       console.log(this.data.healthData.sex);
   },
     // 处理健康档案模态框确认按钮点击事件
