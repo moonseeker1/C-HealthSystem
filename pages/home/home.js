@@ -11,7 +11,7 @@ Page({
         isUpdateHealthModalShow: false, 
         healthData: {
             age: '',
-            sexIndex: '0', // 0 表示男，1 表示女，默认选择男
+            sexIndex: 0, // 0 表示男，1 表示女，默认选择男
             sex: 0, // 存储性别的数值
             height: '',
             weight: '',
@@ -23,7 +23,6 @@ Page({
         isHealthSuggestionModalShow: false,
         healthSuggestion: '',
         sexOptions: ['男', '女'], // 性别选项
-        selectedSex: '0'
     },
     onShow: function () {
         if (wx.getStorageSync('expireTime') == null || wx.getStorageSync('expireTime') < Date.now()) {
@@ -119,7 +118,7 @@ Page({
         const app = getApp();
         const userId = app.getUserId(); // 假设 app.js 中有 getUserId 方法获取 userId
         const jwtToken = app.getJwtToken();
-
+        console.log(this.data.healthData.sexIndex)
         if (!jwtToken) {
             console.error('未获取到 JWT Token，无法请求健康档案数据');
             wx.showToast({
@@ -206,7 +205,7 @@ Page({
         this.setData({
             healthData: {
                 age: '',
-                sexIndex: '0',
+                sexIndex: 0,
                 sex: 0,
                 height: '',
                 weight: '',
@@ -226,14 +225,14 @@ Page({
     },
     // 处理性别选择变化的方法
     handleSexChange: function(e) {
-      const index = e.detail.value;
-      console.log(index === '0'? '0' : '1');
+      const index = Number(e.detail.value);
+      console.log(this.data.healthData.sex);
       this.setData({
           "healthData.sexIndex": index,
-          "healthData.sex": index === '0'? '0' : '1', // 根据选择更新对应的数值
+          "healthData.sex": index === 0? 0: 1, // 根据选择更新对应的数值
 
       });
-      console.log(this.data.healthData.sexIndex);
+      console.log(this.data.healthData.sex);
   },
     // 处理健康档案模态框确认按钮点击事件
     confirmNewHealthData({ detail }) {
