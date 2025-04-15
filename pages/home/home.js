@@ -82,36 +82,52 @@ Page({
             isShow: true
         })
     },
-    confirmLogout({ detail }) {
-        console.log(detail.index);
-        if (detail.index == '1') {
-            wx.removeStorageSync('expireTime')
-            let username = wx.getStorageSync('username')
-            wx.removeStorageSync('username')
-            wx.request({
-                url: 'http://127.0.0.1:80/user/logout',
-                method: "get",
-                data: {
-                    "username": username,
-                },
-                success: ({
-                    data
-                }) => {
-                    wx.showToast({
-                        icon: 'none',
-                        title: '退出成功',
-                        duration: 1500
-                    })
-                }
-            })
-            wx.redirectTo({
-                url: '/pages/login/login',
-            })
-        }
-        this.setData({
-            isShow: false
-        })
-    },
+// pages/home/home.js
+
+confirmLogout({ detail }) {
+  console.log(detail.index);
+  if (detail.index == '1') {
+    // 清除用户相关缓存
+    wx.removeStorageSync('expireTime');
+    let username = wx.getStorageSync('username');
+    wx.removeStorageSync('jwtToken');
+    wx.removeStorageSync('userId');
+    wx.removeStorageSync('status');
+    // 清除对话缓存
+    app.globalData.msgList = []; // 清空全局的msgList
+    app.globalData.fullConversation = " ";
+    app.globalData.socketTask = null;
+    console.log(app.globalData.msgList);
+    // 如果有其他本地存储的对话数据，也一并清除
+    wx.removeStorageSync('chatHistory'); 
+    try {
+      wx.clearStorageSync();
+      console.log('缓存已全部清除');
+    } catch (e) {
+      console.error('清除缓存失败:', e);
+    }
+    wx.request({
+      url: 'http://127.0.0.1:80/user/logout',
+      method: "get",
+      data: {
+        "username": username,
+      },
+      success: ({ data }) => {
+        wx.showToast({
+          icon: 'none',
+          title: '退出成功',
+          duration: 1500
+        });
+      }
+    });
+    wx.redirectTo({
+      url: '/pages/login/login',
+    });
+  }
+  this.setData({
+    isShow: false
+  });
+},
     
     // 健康档案格子点击事件处理函数
     showHealthModal() {

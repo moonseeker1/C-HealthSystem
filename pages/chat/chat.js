@@ -1,6 +1,6 @@
 const app = getApp();
 var inputVal = '';
-var msgList = [];
+var msgList = app.globalData.msgList;
 var windowWidth = wx.getSystemInfoSync().windowWidth;
 var windowHeight = wx.getSystemInfoSync().windowHeight;
 var keyHeight = 0;
@@ -104,9 +104,9 @@ function sendHttpMessage(msg, that) {
       console.error('HTTP 请求失败:', err);
     }
   });
-
+  
   // 存储完整对话内容
-  let fullConversation = '';
+  let fullConversation = app.globalData.fullConversation;
   // 当前正在处理的服务器消息在 msgList 中的索引
   let currentMsgIndex = -1;
   // 缓冲区，用于临时存储接收到的消息片段
@@ -278,16 +278,17 @@ Page({
     inputBottom: 0
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad: function (options) {
-    initData(this);
+  onShow: function (options) {
+    const fromLogin = wx.getStorageSync('fromLogin');
+    if (fromLogin) {
+      // 登录后跳转到该页面，执行刷新逻辑
+      initData(this);
+    }
+    // 其他初始化逻辑...
     this.setData({
       cusHeadIcon: "/images/春日野穹.png",
     });
   },
-
   /**
    * 获取聚焦
    */

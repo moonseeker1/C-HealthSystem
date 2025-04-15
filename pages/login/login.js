@@ -87,6 +87,7 @@ Page({
             title: '登陆成功',
             duration: 2500
           })
+          wx.setStorageSync('fromLogin', true);
           wx.setStorageSync("username", username)
           wx.setStorageSync('expireTime', Date.now() + 60 * 60 * 24 * 1000);
           const jwtToken = data.data;

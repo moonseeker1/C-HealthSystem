@@ -5,8 +5,6 @@ App({
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
 
-      // 如果socketTask不存在或者已关闭，创建新的WebSocket连接
-
   },
   globalData: {
     userInfo: null,
@@ -14,7 +12,9 @@ App({
     userName: null,
     jwtToken: null,
     status: null,
-    socketTask: null
+    socketTask: null,
+    msgList: [],
+    fullConversation:""
   },
   linkWebSocket(){
     
