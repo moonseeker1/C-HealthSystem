@@ -116,10 +116,11 @@ function sendHttpMessage(msg, that) {
   // 逐字显示的时间间隔（毫秒）
   const displayInterval = 20;
   socketTask = app.getSocketTask();
+  console.log(socketTask);
   if (socketTask === null) {
-    console.log(1);
     app.linkWebSocket();
     socketTask = app.getSocketTask();
+    console.log(socketTask);
   }
 
   // 只绑定一次 onMessage 监听器
@@ -283,6 +284,7 @@ Page({
     if (fromLogin) {
       // 登录后跳转到该页面，执行刷新逻辑
       initData(this);
+      wx.setStorageSync('fromLogin', false);
     }
     // 其他初始化逻辑...
     this.setData({

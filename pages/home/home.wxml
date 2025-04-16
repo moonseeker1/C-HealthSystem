@@ -8,7 +8,7 @@
 <!-- 健康建议按钮 -->
 <button class="health-suggestion-btn" bindtap="showHealthSuggestionModal" type="primary">健康建议</button>
 <view class="container">
-  <button bindtap="logout" class="logout_btn" type="primary">退出登录</button>
+  <button bindtap="logout" class="new-health-btn" type="primary">退出登录</button>
   <mp-dialog title="退出登录" show="{{isShow}}" bindbuttontap="confirmLogout" buttons="{{buttons}}">
     <view>确认退出吗？</view>
   </mp-dialog>

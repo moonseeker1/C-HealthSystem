@@ -108,8 +108,13 @@ App({
     wx.setStorageSync('status', status);
   },
   getSocketTask(){
-
     return this.globalData.socketTask;
-  
+  },
+  closeWebSocket() {
+    const socketTask = this.globalData.socketTask;
+    if (socketTask && (socketTask.readyState === wx.CONNECTING || socketTask.readyState === wx.OPEN)) {
+      socketTask.close();
+      console.log('WebSocket 连接已关闭');
+    }
   }
 });
