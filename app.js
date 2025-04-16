@@ -12,6 +12,8 @@ App({
     userName: null,
     jwtToken: null,
     status: null,
+    dietStatus: null,
+    sportStatus:null,
     socketTask: null,
     msgList: [],
     fullConversation:""
@@ -55,13 +57,17 @@ App({
             if (res.statusCode === 200) {
                 const { code, message, data } = res.data;
                 if (code === 200) {
-                    const { userId, userName, status } = data;
+                    const {userId,userName,status,dietStatus,sportStatus} = data;
                     this.globalData.userId = userId;
                     this.globalData.userName = userName;
                     this.globalData.status = status;
+                    this.globalData.dietStatus = dietStatus;
+                    this.globalData.sportStatus = sportStatus;
                     wx.setStorageSync('userId', userId);
                     wx.setStorageSync('userName', userName);
-                    wx.setStorageSync('userName', status);
+                    wx.setStorageSync('status', status);
+                    wx.setStorageSync('dietStatus', dietStatus);
+                    wx.setStorageSync('sportStatus', sportStatus);
                     console.log('成功获取并缓存用户信息');
                 } else {
                     console.error('业务处理失败，消息:', message);
@@ -106,6 +112,17 @@ App({
     this.globalData.status = status;
     // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
     wx.setStorageSync('status', status);
+  },
+  getDietStatus() {
+    if (!this.globalData.dietStatus) {
+      this.globalData.dietStatus = wx.getStorageSync('dietStatus');
+    }
+    return this.globalData.dietStatus;
+  },
+  setStatus(dietStatus) {
+    this.globalData.dietStatus = dietStatus;
+    // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
+    wx.setStorageSync('dietStatus', dietStatus);
   },
   getSocketTask(){
     return this.globalData.socketTask;

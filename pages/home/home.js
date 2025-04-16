@@ -409,7 +409,10 @@ confirmLogout({ detail }) {
     
       // 监听 WebSocket 消息
       socketTask.onMessage((res) => {
-        const receivedWord = res.data;
+        const message = JSON.parse(res.data);
+        const receivedWord = message.content;
+        const type = message.type;
+        if(type === 'suggestion'){
         // 过滤结束符
         if (receivedWord === '$$$') {
           // 如果缓冲区还有剩余字符，先处理这些字符
@@ -437,7 +440,7 @@ confirmLogout({ detail }) {
     
           // 开始逐字显示新消息
           startCharacterByCharacterDisplay(displayText);
-        }
+        }}
       });
     
       // 开始逐字显示的函数
@@ -595,5 +598,162 @@ confirmLogout({ detail }) {
                 isUpdateHealthModalShow: false
             });
         }
+    },
+      // 显示饮食建议模态框
+  showDietSuggestionModal() {
+    this.setData({
+      isDietSuggestionModalShow: true
+    });
+  },
+
+  // 确认饮食建议模态框
+  confirmDietSuggestion({ detail }) {
+    if (detail.index === 1) {
+      // 这里可以添加确认后的逻辑，比如记录用户已查看建议等
     }
+    this.setData({
+      isDietSuggestionModalShow: false
+    });
+  },
+
+  // 处理饮食建议文本框输入变化
+  handleDietInputChange(e) {
+    const field = e.currentTarget.dataset.field;
+    const value = e.detail.value;
+    this.setData({
+      ['dietData.' + field]: value
+    });
+  },
+
+  // 获取饮食建议
+  getDietSuggestion() {
+    const app = getApp();
+    const userId = app.getUserId();
+    const jwtToken = app.getJwtToken();
+    const { dietData } = this.data;
+    const that = this;
+
+    if (!jwtToken) {
+      console.error('未获取到 JWT Token，无法请求饮食建议');
+      wx.showToast({
+        icon: 'none',
+        title: '未获取到 JWT Token，无法请求饮食建议'
+      });
+      return;
+    }
+
+    if (userId) {
+      wx.request({
+        url: `http://127.0.0.1:8080/bigModule/dietAnalysis?userId=${userId}&breakfast=${dietData.breakfast}&lunch=${dietData.lunch}&dinner=${dietData.dinner}`,
+        method: 'GET',
+        header: {
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data) {
+            console.log('饮食建议请求成功');
+            that.setData({
+              dietSuggestion: res.data.data // 假设返回的数据在 data 字段中
+            });
+          } else {
+            console.error('饮食建议请求失败:', res);
+          }
+        },
+        fail: (err) => {
+          console.error('HTTP 请求失败:', err);
+        },
+      });
+    } else {
+      console.error('未获取到 userId');
+      wx.showToast({
+        icon: 'none',
+        title: '未获取到 userId'
+      });
+      return;
+    }
+  },
+  saveDietPreferences() {
+    const app = getApp();
+    const userId = app.getUserId();
+    const dietStatus = app.getDietStatus();
+    const jwtToken = app.getJwtToken();
+    const { dietData } = this.data;
+    const that = this;
+
+    if (!jwtToken) {
+      console.error('未获取到 JWT Token，无法保存饮食偏好');
+      wx.showToast({
+        icon: 'none',
+        title: '未获取到 JWT Token，无法保存饮食偏好'
+      });
+      return;
+    }
+
+    if (dietStatus === 0) {
+      wx.request({
+        url: `http://127.0.0.1:8080/diet/save`,
+        method: 'POST',
+        header: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(dietData),
+        success: (res) => {
+          if (res.statusCode === 200) {
+            console.log('饮食偏好保存成功');
+            wx.showToast({
+              title: '保存成功',
+              icon: 'success'
+            });
+          } else {
+            console.error('饮食偏好保存失败:', res);
+            wx.showToast({
+              icon: 'none',
+              title: '保存失败，请稍后重试'
+            });
+          }
+        },
+        fail: (err) => {
+          console.error('HTTP 请求失败:', err);
+          wx.showToast({
+            icon: 'none',
+            title: '请求失败，请检查网络'
+          });
+        },
+      });
+    } else {
+      wx.request({
+        url: `http://127.0.0.1:8080/diet/save`,
+        method: 'POST',
+        header: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(dietData),
+        success: (res) => {
+          if (res.statusCode === 200) {
+            console.log('饮食偏好保存成功');
+            wx.showToast({
+              title: '保存成功',
+              icon: 'success'
+            });
+          } else {
+            console.error('饮食偏好保存失败:', res);
+            wx.showToast({
+              icon: 'none',
+              title: '保存失败，请稍后重试'
+            });
+          }
+        },
+        fail: (err) => {
+          console.error('HTTP 请求失败:', err);
+          wx.showToast({
+            icon: 'none',
+            title: '请求失败，请检查网络'
+          });
+        },
+      });
+      return;
+    }
+  }
 })    

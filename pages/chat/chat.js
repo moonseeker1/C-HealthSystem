@@ -126,17 +126,20 @@ function sendHttpMessage(msg, that) {
   // 只绑定一次 onMessage 监听器
   if (!isMessageListenerBound) {
     socketTask.onMessage((res) => {
-      const receivedWord = res.data;
+      const message = JSON.parse(res.data);
+      const receivedWord = message.content;
+      const type = message.type;
       // 过滤结束符
-      if (receivedWord === '$$$') {
-        // 如果缓冲区还有剩余字符，先处理这些字符
-        if (buffer) {
-          handleBufferedMessage();
+      if(type==='chat'){
+        if (receivedWord === '$$$') {
+          // 如果缓冲区还有剩余字符，先处理这些字符
+          if (buffer) {
+            handleBufferedMessage();
+          }
+          handleCompleteMessage();
+          return;
         }
-        handleCompleteMessage();
-        return;
-      }
-
+    
       // 将接收到的消息添加到缓冲区
       buffer += receivedWord;
       // 拼接完整对话内容
@@ -174,6 +177,7 @@ function sendHttpMessage(msg, that) {
           });
         }).exec();
       }
+    }
     });
     isMessageListenerBound = true;
   }
