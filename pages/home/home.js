@@ -606,12 +606,72 @@ confirmLogout({ detail }) {
         }
     },
       // 显示饮食建议模态框
-  showDietSuggestionModal() {
-    this.setData({
-      isDietSuggestionModalShow: true
-    });
-  },
 
+  showDiet() {
+    const app = getApp();
+    const userId = app.getUserId();
+    const jwtToken = app.getJwtToken();
+    const that = this;
+
+    if (!jwtToken) {
+        console.error('未获取到JWT Token，无法请求饮食数据');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到JWT Token，无法请求饮食数据'
+        });
+        return;
+    }
+
+    if (userId) {
+        wx.request({
+            url: `http://127.0.0.1:8080/health/diet/get/${userId}`, // 根据实际接口地址修改
+            method: 'GET',
+            header: {
+                'Authorization': `Bearer ${jwtToken}`
+            },
+            success: (res) => {
+                if (res.statusCode === 200) {
+                    const { code, data } = res.data;
+                    if (code === 200) {
+                        // 假设后端返回的diet数据结构为{breakfast: '', lunch: '', dinner: ''}
+                        that.setData({
+                            dietData: data
+                        });
+                        // 这里可以添加弹出模态框展示数据的逻辑，例如：
+                        that.setData({
+                            isDietSuggestionModalShow: true
+                        });
+                    } else {
+                        console.error('获取饮食数据失败，业务错误码:', code);
+                        wx.showToast({
+                            icon: 'none',
+                            title: '获取饮食数据失败，业务错误'
+                        });
+                    }
+                } else {
+                    console.error('获取饮食数据失败，状态码:', res.statusCode);
+                    wx.showToast({
+                        icon: 'none',
+                        title: `获取饮食数据失败，状态码: ${res.statusCode}`
+                    });
+                }
+            },
+            fail: (err) => {
+                console.error('请求接口失败:', err);
+                wx.showToast({
+                    icon: 'none',
+                    title: `请求接口失败: ${err.errMsg}`
+                });
+            }
+        });
+    } else {
+        console.error('未获取到userId');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到userId'
+        });
+    }
+  },
   // 确认饮食建议模态框
   confirmDietSuggestion({ detail }) {
     if (detail.index === 1) {
@@ -631,53 +691,6 @@ confirmLogout({ detail }) {
     });
   },
 
-  // 获取饮食建议
-  getDietSuggestion() {
-    const app = getApp();
-    const userId = app.getUserId();
-    const jwtToken = app.getJwtToken();
-    const { dietData } = this.data;
-    const that = this;
-
-    if (!jwtToken) {
-      console.error('未获取到 JWT Token，无法请求饮食建议');
-      wx.showToast({
-        icon: 'none',
-        title: '未获取到 JWT Token，无法请求饮食建议'
-      });
-      return;
-    }
-
-    if (userId) {
-      wx.request({
-        url: `http://127.0.0.1:8080/bigModule/dietAnalysis?userId=${userId}&breakfast=${dietData.breakfast}&lunch=${dietData.lunch}&dinner=${dietData.dinner}`,
-        method: 'GET',
-        header: {
-          'Authorization': `Bearer ${jwtToken}`
-        },
-        success: (res) => {
-          if (res.statusCode === 200 && res.data) {
-            console.log('饮食建议请求成功');
-            that.setData({
-              dietSuggestion: res.data.data // 假设返回的数据在 data 字段中
-            });
-          } else {
-            console.error('饮食建议请求失败:', res);
-          }
-        },
-        fail: (err) => {
-          console.error('HTTP 请求失败:', err);
-        },
-      });
-    } else {
-      console.error('未获取到 userId');
-      wx.showToast({
-        icon: 'none',
-        title: '未获取到 userId'
-      });
-      return;
-    }
-  },
   saveDietPreferences() {
     const app = getApp();
     const dietStatus = app.getDietStatus();
@@ -761,5 +774,190 @@ confirmLogout({ detail }) {
       });
       return;
     }
+  },
+
+
+// 显示饮食建议模态框
+showDietSuggestionModal() {
+  const app = getApp();
+  const userId = app.getUserId();
+  const jwtToken = app.getJwtToken();
+  const that = this;
+
+  if (!jwtToken) {
+      console.error('未获取到 JWT Token，无法请求饮食建议');
+      wx.showToast({
+          icon: 'none',
+          title: '未获取到 JWT Token，无法请求饮食建议'
+      });
+      return;
   }
+  if(app.getDietStatus()===0){
+    wx.showToast({
+      title: '请保存饮食偏好'
+    })
+    return;
+  }
+
+  if (userId) {
+      const { dietData } = this.data;
+      // 初始化建议内容为空
+      that.setData({
+          dietSuggestion: '',
+          isDietAnalysisModalShow: true,
+          isModalOpen: true
+      });
+
+      wx.request({
+          url: `http://127.0.0.1:8080/bigModule/diet`,
+          method: 'GET',
+          header: {
+              'Authorization': `Bearer ${jwtToken}`
+          },
+          success: (res) => {
+              if (res.statusCode === 200 && res.data) {
+                  console.log('饮食建议请求成功');
+              } else {
+                  console.error('饮食建议请求失败:', res);
+              }
+          },
+          fail: (err) => {
+              console.error('HTTP 请求失败:', err);
+          },
+      });
+  } else {
+      console.error('未获取到 userId');
+      wx.showToast({
+          icon: 'none',
+          title: '未获取到 userId'
+      });
+      return;
+  }
+
+  // 存储完整对话内容
+  let fullConversation = '';
+  // 当前正在处理的服务器消息在 msgList 中的索引
+  let currentMsgIndex = -1;
+  // 缓冲区，用于临时存储接收到的消息片段
+  let buffer = '';
+  // 定时器 ID
+  let intervalId = null;
+  // 逐字显示的时间间隔（毫秒）
+  const displayInterval = 20;
+  let socketTask = app.getSocketTask();
+  if (socketTask === null) {
+      app.linkWebSocket();
+      socketTask = app.getSocketTask();
+  }
+
+  // 监听 WebSocket 消息
+  socketTask.onMessage((res) => {
+      const message = JSON.parse(res.data);
+      const receivedWord = message.content;
+      const type = message.type;
+      if (type === 'diet') {
+          // 过滤结束符
+          if (receivedWord === '$$$') {
+              // 如果缓冲区还有剩余字符，先处理这些字符
+              if (buffer) {
+                  handleBufferedMessage();
+              }
+              handleCompleteMessage();
+              return;
+          }
+
+          // 将接收到的消息添加到缓冲区
+          buffer += receivedWord;
+          // 拼接完整对话内容
+          fullConversation += receivedWord;
+
+          // 如果缓冲区字符数量达到 10 个，开始逐字显示
+          if (buffer.length >= 10) {
+              const displayText = buffer.slice(0, 10);
+              buffer = buffer.slice(10);
+
+              // 停止之前的定时器
+              if (intervalId) {
+                  clearInterval(intervalId);
+              }
+
+              // 开始逐字显示新消息
+              startCharacterByCharacterDisplay(displayText);
+          }
+      }
+  });
+
+  // 开始逐字显示的函数
+  function startCharacterByCharacterDisplay(text) {
+      let index = 0;
+      intervalId = setInterval(() => {
+          if (index < text.length) {
+              const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
+              that.setData({
+                  dietSuggestion: newContent
+              });
+              index++;
+          } else {
+              clearInterval(intervalId);
+              // 如果缓冲区还有字符，继续处理
+              if (buffer.length >= 10) {
+                  const nextDisplayText = buffer.slice(0, 10);
+                  buffer = buffer.slice(10);
+                  startCharacterByCharacterDisplay(nextDisplayText);
+              }
+          }
+      }, displayInterval);
+  }
+
+  // 处理缓冲区剩余消息的函数
+  function handleBufferedMessage() {
+      if (buffer) {
+          // 停止之前的定时器
+          if (intervalId) {
+              clearInterval(intervalId);
+          }
+
+          // 开始逐字显示缓冲区剩余的消息
+          startCharacterByCharacterDisplay(buffer);
+          buffer = '';
+      }
+  }
+
+  // 处理完整消息的函数
+  function handleCompleteMessage() {
+      if (intervalId) {
+          clearInterval(intervalId);
+      }
+      that.setData({
+          dietSuggestion: fullConversation
+      });
+      // 重置相关变量
+      currentMsgIndex = -1;
+      buffer = '';
+      fullConversation = '';
+      // 隐藏加载提示
+      wx.hideLoading();
+  }
+
+  // 监听 WebSocket 关闭事件
+  socketTask.onClose(() => {
+      console.log('WebSocket 连接关闭');
+  });
+
+  // 监听 WebSocket 错误事件
+  socketTask.onError((err) => {
+      console.error('WebSocket 发生错误:', err);
+      // 隐藏加载提示
+      wx.hideLoading();
+  });
+},
+    // 确认饮食分析结果模态框
+  confirmDietAnalysis({ detail }) {
+        if (detail.index === 1) {
+            // 这里可以添加确认后的逻辑，比如记录用户已查看建议等
+        }
+        this.setData({
+            isDietAnalysisModalShow: false
+        });
+  },
 })    

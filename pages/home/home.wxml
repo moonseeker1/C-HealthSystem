@@ -8,7 +8,7 @@
 <!-- 健康建议按钮 -->
 <button class="health-suggestion-btn" bindtap="showHealthSuggestionModal" type="primary">健康建议</button>
 <!-- 饮食建议按钮 -->
-<button class="diet-suggestion-btn" bindtap="showDietSuggestionModal" type="primary">饮食建议</button>
+<button class="diet-suggestion-btn" bindtap="showDiet" type="primary">饮食建议</button>
 
 <!-- 运动建议按钮 -->
 <button class="exercise-suggestion-btn" bindtap="showExerciseSuggestionModal" type="primary">运动建议</button>
@@ -107,9 +107,18 @@
         <textarea placeholder="请输入晚餐偏好" data-field="dinner" bindinput="handleDietInputChange" class="diet-modal-input" value="{{dietData.dinner}}"></textarea>
       </view>
       <button bindtap="saveDietPreferences" class="save-diet-preferences-btn" type="primary">保存</button>
-      <button bindtap="getDietSuggestion" class="get-diet-suggestion-btn" type="primary">获取建议</button>
-      <view>{{dietSuggestion}}</view>
+      <button bindtap="showDietSuggestionModal" class="get-diet-suggestion-btn" type="primary">获取建议</button>
     </view>
+  </view>
+</mp-dialog>
+
+<!-- 饮食分析结果模态框 -->
+<mp-dialog title="饮食分析结果" show="{{isDietAnalysisModalShow}}" bindbuttontap="confirmDietAnalysis" buttons="{{[{text: '取消'}, {text: '确认'}]}}">
+  <view class="diet-analysis-container">
+    <!-- 加载提示 -->
+    <view wx:if="{{isLoading}}">加载中...</view>
+    <!-- 饮食分析结果 -->
+    <view wx:else>{{dietSuggestion}}</view>
   </view>
 </mp-dialog>
 </view>

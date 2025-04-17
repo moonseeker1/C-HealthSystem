@@ -71,14 +71,24 @@ button:hover {
 /* 饮食建议模态框输入框样式 */
 .diet-modal-input {
   flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  padding: 15px; /* 增大内边距，让输入框内部空间更大 */
-  font-size: 18px; /* 增大字体大小 */
-  min-height: 60px; /* 减小最小高度 */
-  resize: vertical; /* 允许用户垂直调整输入框大小 */
-  box-sizing: border-box; /* 确保内边距和边框包含在宽度和高度内 */
+  border: 2px solid #999;
+  border-radius: 5px;
+  padding: 12px;
+  font-size: 16px;
+  min-height: 40px; /* 减小最小高度 */
+  height: 60px; /* 设置固定高度 */
+  resize: none; /* 禁止用户调整输入框大小 */
+  box-sizing: border-box;
+  margin-top: 5px;
+  transition: border-color 0.3s ease;
 }
+
+/* 输入框聚焦时的样式 */
+.diet-modal-input:focus {
+  border-color: #007aff;
+  outline: none;
+}
+
 
 /* 获取饮食建议按钮样式 */
 .get-diet-suggestion-btn {
