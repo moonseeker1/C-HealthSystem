@@ -18,6 +18,12 @@ Page({
             bloodPressure: '',
             bloodSugar: ''
         },
+        dietData:{
+          userId:'',
+          breakfast:'',
+          lunch:'',
+          dinner:''
+        },
         isModalOpen: false, 
         intervalId: null ,
         isHealthSuggestionModalShow: false,
@@ -674,11 +680,10 @@ confirmLogout({ detail }) {
   },
   saveDietPreferences() {
     const app = getApp();
-    const userId = app.getUserId();
     const dietStatus = app.getDietStatus();
     const jwtToken = app.getJwtToken();
     const { dietData } = this.data;
-    const that = this;
+    this.data.dietData.userId = app.getUserId();
 
     if (!jwtToken) {
       console.error('未获取到 JWT Token，无法保存饮食偏好');
@@ -691,7 +696,7 @@ confirmLogout({ detail }) {
 
     if (dietStatus === 0) {
       wx.request({
-        url: `http://127.0.0.1:8080/diet/save`,
+        url: `http://127.0.0.1:8080/health/diet/save`,
         method: 'POST',
         header: {
           'Authorization': `Bearer ${jwtToken}`,
@@ -701,6 +706,7 @@ confirmLogout({ detail }) {
         success: (res) => {
           if (res.statusCode === 200) {
             console.log('饮食偏好保存成功');
+            app.setDietStatus(1);
             wx.showToast({
               title: '保存成功',
               icon: 'success'
@@ -723,8 +729,8 @@ confirmLogout({ detail }) {
       });
     } else {
       wx.request({
-        url: `http://127.0.0.1:8080/diet/save`,
-        method: 'POST',
+        url: `http://127.0.0.1:8080/health/diet/update`,
+        method: 'Put',
         header: {
           'Authorization': `Bearer ${jwtToken}`,
           'Content-Type': 'application/json'

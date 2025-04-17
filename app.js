@@ -119,7 +119,7 @@ App({
     }
     return this.globalData.dietStatus;
   },
-  setStatus(dietStatus) {
+  setDietStatus(dietStatus) {
     this.globalData.dietStatus = dietStatus;
     // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
     wx.setStorageSync('dietStatus', dietStatus);
