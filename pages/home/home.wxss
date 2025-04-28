@@ -99,3 +99,45 @@ button:hover {
 .exercise-suggestion-container {
   padding: 20px;
 }
+/* 运动建议模态框行样式 */
+.exercise-modal-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* 运动建议模态框标签样式 */
+.exercise-modal-label {
+  width: 80px;
+}
+
+/* 运动建议模态框输入框样式 */
+.exercise-modal-input {
+  flex: 1;
+  border: 2px solid #999;
+  border-radius: 5px;
+  padding: 12px;
+  font-size: 16px;
+  min-height: 40px; /* 减小最小高度 */
+  height: 60px; /* 设置固定高度 */
+  resize: none; /* 禁止用户调整输入框大小 */
+  box-sizing: border-box;
+  margin-top: 5px;
+  transition: border-color 0.3s ease;
+}
+
+/* 输入框聚焦时的样式 */
+.exercise-modal-input:focus {
+  border-color: #007aff;
+  outline: none;
+}
+
+/* 获取运动建议按钮样式 */
+.get-exercise-suggestion-btn {
+  margin-top: 10px;
+}
+
+/* 运动分析结果模态框容器样式 */
+.exercise-analysis-container {
+  padding: 20px;
+}

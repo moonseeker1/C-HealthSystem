@@ -24,6 +24,12 @@ Page({
           lunch:'',
           dinner:''
         },
+        sportData:{
+          userId:'',
+          type:'',
+          rate:'',
+          time:''
+        },
         isModalOpen: false, 
         intervalId: null ,
         isHealthSuggestionModalShow: false,
@@ -952,12 +958,366 @@ showDietSuggestionModal() {
   });
 },
     // 确认饮食分析结果模态框
-  confirmDietAnalysis({ detail }) {
+confirmDietAnalysis({ detail }) {
         if (detail.index === 1) {
             // 这里可以添加确认后的逻辑，比如记录用户已查看建议等
         }
         this.setData({
             isDietAnalysisModalShow: false
         });
-  },
+},
+  // 显示运动建议模态框
+showSportSuggestionModal() {
+    const app = getApp();
+    const userId = app.getUserId();
+    const jwtToken = app.getJwtToken();
+    const that = this;
+    console.log(this.data.sportData);
+    if (!jwtToken) {
+        console.error('未获取到 JWT Token，无法请求运动数据');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到 JWT Token，无法请求运动数据'
+        });
+        return;
+    }
+
+    if (userId) {
+        wx.request({
+            url: `http://127.0.0.1:8080/health/sport/get/${userId}`, // 根据实际接口地址修改
+            method: 'GET',
+            header: {
+                'Authorization': `Bearer ${jwtToken}`
+            },
+            success: (res) => {
+                if (res.statusCode === 200) {
+                    const { code, data } = res.data;
+                    if (code === 200) {
+                        that.setData({
+                            sportData: data
+                        });
+                        that.setData({
+                            isSportSuggestionModalShow: true
+                        });
+                    } else {
+                        console.error('获取运动数据失败，业务错误码:', code);
+                        wx.showToast({
+                            icon: 'none',
+                            title: '获取运动数据失败，业务错误'
+                        });
+                    }
+                } else {
+                    console.error('获取运动数据失败，状态码:', res.statusCode);
+                    wx.showToast({
+                        icon: 'none',
+                        title: `获取运动数据失败，状态码: ${res.statusCode}`
+                    });
+                }
+            },
+            fail: (err) => {
+                console.error('请求接口失败:', err);
+                wx.showToast({
+                    icon: 'none',
+                    title: `请求接口失败: ${err.errMsg}`
+                });
+            }
+        });
+    } else {
+        console.error('未获取到 userId');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到 userId'
+        });
+    }
+},
+
+// 处理运动建议文本框输入变化
+handleSportInputChange(e) {
+    const field = e.currentTarget.dataset.field;
+    const value = e.detail.value;
+    
+    this.setData({
+        [`sportData.${field}`]: value
+    });
+    console.log(this.data.sportData);
+},
+
+// 保存运动偏好
+saveSportPreferences() {
+    const app = getApp();
+    const sportStatus = app.getSportStatus();
+    const jwtToken = app.getJwtToken();
+    const { sportData } = this.data;
+    this.data.sportData.userId = app.getUserId();
+    if (!jwtToken) {
+        console.error('未获取到 JWT Token，无法保存运动偏好');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到 JWT Token，无法保存运动偏好'
+        });
+        return;
+    }
+
+    if (sportStatus === 0) {
+        wx.request({
+            url: `http://127.0.0.1:8080/health/sport/save`,
+            method: 'POST',
+            header: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(sportData),
+            success: (res) => {
+                if (res.statusCode === 200) {
+                    console.log('运动偏好保存成功');
+                    app.setDietStatus(1);
+                    wx.showToast({
+                        title: '保存成功',
+                        icon: 'success'
+                    });
+                } else {
+                    console.error('运动偏好保存失败:', res);
+                    wx.showToast({
+                        icon: 'none',
+                        title: '保存失败，请稍后重试'
+                    });
+                }
+            },
+            fail: (err) => {
+                console.error('HTTP 请求失败:', err);
+                wx.showToast({
+                    icon: 'none',
+                    title: '请求失败，请检查网络'
+                });
+            },
+        });
+    } else {
+        wx.request({
+            url: `http://127.0.0.1:8080/health/sport/update`,
+            method: 'Put',
+            header: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(sportData),
+            success: (res) => {
+                if (res.statusCode === 200) {
+                    console.log('运动偏好保存成功');
+                    wx.showToast({
+                        title: '保存成功',
+                        icon: 'success'
+                    });
+                } else {
+                    console.error('运动偏好保存失败:', res);
+                    wx.showToast({
+                        icon: 'none',
+                        title: '保存失败，请稍后重试'
+                    });
+                }
+            },
+            fail: (err) => {
+                console.error('HTTP 请求失败:', err);
+                wx.showToast({
+                    icon: 'none',
+                    title: '请求失败，请检查网络'
+                });
+            },
+        });
+    }
+},
+
+// 显示运动分析结果模态框
+showSportAnalysisModal() {
+    const app = getApp();
+    const userId = app.getUserId();
+    const jwtToken = app.getJwtToken();
+    const that = this;
+
+    if (!jwtToken) {
+        console.error('未获取到 JWT Token，无法请求运动建议');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到 JWT Token，无法请求运动建议'
+        });
+        return;
+    }
+
+    if (this.data.sportStatus === 0) {
+        wx.showToast({
+            title: '请保存运动偏好'
+        });
+        return;
+    }
+
+    if (userId) {
+        const { sportData } = this.data;
+        that.setData({
+            sportSuggestion: '',
+            isSportAnalysisModalShow: true,
+            isModalOpen: true
+        });
+
+        wx.request({
+            url: `http://127.0.0.1:8080/bigModule/sport`,
+            method: 'GET',
+            header: {
+                'Authorization': `Bearer ${jwtToken}`
+            },
+            success: (res) => {
+                if (res.statusCode === 200 && res.data) {
+                    console.log('运动建议请求成功');
+                } else {
+                    console.error('运动建议请求失败:', res);
+                }
+            },
+            fail: (err) => {
+                console.error('HTTP 请求失败:', err);
+            },
+        });
+    } else {
+        console.error('未获取到 userId');
+        wx.showToast({
+            icon: 'none',
+            title: '未获取到 userId'
+        });
+        return;
+    }
+
+    // 存储完整对话内容
+    let fullConversation = '';
+    // 当前正在处理的服务器消息在 msgList 中的索引
+    let currentMsgIndex = -1;
+    // 缓冲区，用于临时存储接收到的消息片段
+    let buffer = '';
+    // 定时器 ID
+    let intervalId = null;
+    // 逐字显示的时间间隔（毫秒）
+    const displayInterval = 20;
+    let socketTask = app.getSocketTask();
+    if (socketTask === null) {
+        app.linkWebSocket();
+        socketTask = app.getSocketTask();
+    }
+
+    // 监听 WebSocket 消息
+    socketTask.onMessage((res) => {
+        const message = JSON.parse(res.data);
+        const receivedWord = message.content;
+        const type = message.type;
+        if (type === 'sport') {
+            // 过滤结束符
+            if (receivedWord === '$$$') {
+                // 如果缓冲区还有剩余字符，先处理这些字符
+                if (buffer) {
+                    handleBufferedMessage();
+                }
+                handleCompleteMessage();
+                return;
+            }
+
+            // 将接收到的消息添加到缓冲区
+            buffer += receivedWord;
+            // 拼接完整对话内容
+            fullConversation += receivedWord;
+
+            // 如果缓冲区字符数量达到 10 个，开始逐字显示
+            if (buffer.length >= 10) {
+                const displayText = buffer.slice(0, 10);
+                buffer = buffer.slice(10);
+
+                // 停止之前的定时器
+                if (intervalId) {
+                    clearInterval(intervalId);
+                }
+
+                // 开始逐字显示新消息
+                startCharacterByCharacterDisplay(displayText);
+            }
+        }
+    });
+
+    // 开始逐字显示的函数
+    function startCharacterByCharacterDisplay(text) {
+        let index = 0;
+        intervalId = setInterval(() => {
+            if (index < text.length) {
+                const newContent = fullConversation.slice(0, fullConversation.length - buffer.length - text.length + index + 1);
+                that.setData({
+                    sportSuggestion: newContent
+                });
+                index++;
+            } else {
+                clearInterval(intervalId);
+                // 如果缓冲区还有字符，继续处理
+                if (buffer.length >= 10) {
+                    const nextDisplayText = buffer.slice(0, 10);
+                    buffer = buffer.slice(10);
+                    startCharacterByCharacterDisplay(nextDisplayText);
+                }
+            }
+        }, displayInterval);
+    }
+
+    // 处理缓冲区剩余消息的函数
+    function handleBufferedMessage() {
+        if (buffer) {
+            // 停止之前的定时器
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+
+            // 开始逐字显示缓冲区剩余的消息
+            startCharacterByCharacterDisplay(buffer);
+            buffer = '';
+        }
+    }
+
+    // 处理完整消息的函数
+    function handleCompleteMessage() {
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+        that.setData({
+            sportSuggestion: fullConversation
+        });
+        // 重置相关变量
+        currentMsgIndex = -1;
+        buffer = '';
+        fullConversation = '';
+        // 隐藏加载提示
+        wx.hideLoading();
+    }
+
+    // 监听 WebSocket 关闭事件
+    socketTask.onClose(() => {
+        console.log('WebSocket 连接关闭');
+    });
+
+    // 监听 WebSocket 错误事件
+    socketTask.onError((err) => {
+        console.error('WebSocket 发生错误:', err);
+        // 隐藏加载提示
+        wx.hideLoading();
+    });
+},
+
+// 确认运动建议模态框
+confirmSportSuggestion({ detail }) {
+    if (detail.index === 1) {
+        // 这里可以添加确认后的逻辑，比如记录用户已查看建议等
+    }
+    this.setData({
+        isSportSuggestionModalShow: false
+    });
+},
+
+// 确认运动分析结果模态框
+confirmSportAnalysis({ detail }) {
+    if (detail.index === 1) {
+        // 这里可以添加确认后的逻辑，比如记录用户已查看建议等
+    }
+    this.setData({
+        isSportAnalysisModalShow: false
+    });
+},
 })    

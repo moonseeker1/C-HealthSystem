@@ -11,7 +11,7 @@
 <button class="diet-suggestion-btn" bindtap="showDiet" type="primary">饮食建议</button>
 
 <!-- 运动建议按钮 -->
-<button class="exercise-suggestion-btn" bindtap="showExerciseSuggestionModal" type="primary">运动建议</button>
+<button class="exercise-suggestion-btn" bindtap="showSportSuggestionModal" type="primary">运动建议</button>
 
 <view class="container">
   <button bindtap="logout" class="new-health-btn" type="primary">退出登录</button>
@@ -119,6 +119,37 @@
     <view wx:if="{{isLoading}}">加载中...</view>
     <!-- 饮食分析结果 -->
     <view wx:else>{{dietSuggestion}}</view>
+  </view>
+</mp-dialog>
+
+
+<!-- 运动建议模态框 -->
+<mp-dialog title="运动建议" show="{{isSportSuggestionModalShow}}" bindbuttontap="confirmSportSuggestion" buttons="{{[{text: '取消'}, {text: '确认'}]}}">
+  <view class="exercise-suggestion-container">
+    <view class="exercise-modal-row">
+      <view class="exercise-modal-label">运动类型</view>
+      <textarea placeholder="运动类型偏好" data-field="type" bindinput="handleSportInputChange" class="exercise-modal-input" value="{{sportData.type}}"></textarea>
+    </view>
+    <view class="exercise-modal-row">
+      <view class="exercise-modal-label">运动频率</view>
+      <textarea placeholder="（每周/次）" data-field="rate" bindinput="handleSportInputChange" class="exercise-modal-input" value="{{sportData.rate}}"></textarea>
+    </view>
+    <view class="exercise-modal-row">
+      <view class="exercise-modal-label">运动时长</view>
+      <textarea placeholder="（/分钟）" data-field="time" bindinput="handleSportInputChange" class="exercise-modal-input" value="{{sportData.time}}"></textarea>
+    </view>
+    <button bindtap="saveSportPreferences" class="save-exercise-preferences-btn" type="primary">保存</button>
+    <button bindtap="showSportAnalysisModal" class="get-exercise-suggestion-btn" type="primary">获取建议</button>
+  </view>
+</mp-dialog>
+
+<!-- 运动分析结果模态框 -->
+<mp-dialog title="运动分析结果" show="{{isSportAnalysisModalShow}}" bindbuttontap="confirmSportAnalysis" buttons="{{[{text: '取消'}, {text: '确认'}]}}">
+  <view class="exercise-analysis-container">
+    <!-- 加载提示 -->
+    <view wx:if="{{isLoading}}">加载中...</view>
+    <!-- 运动分析结果 -->
+    <view wx:else>{{sportSuggestion}}</view>
   </view>
 </mp-dialog>
 </view>

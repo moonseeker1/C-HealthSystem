@@ -124,6 +124,17 @@ App({
     // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
     wx.setStorageSync('dietStatus', dietStatus);
   },
+  getSportStatus() {
+    if (!this.globalData.sportStatus) {
+      this.globalData.sportStatus = wx.getStorageSync('sportStatus');
+    }
+    return this.globalData.sportStatus;
+  },
+  setDietStatus(sportStatus) {
+    this.globalData.sportStatus = sportStatus;
+    // 可以在这里添加一些额外的逻辑，比如保存状态到本地存储
+    wx.setStorageSync('sportStatus', sportStatus);
+  },
   getSocketTask(){
     return this.globalData.socketTask;
   },
